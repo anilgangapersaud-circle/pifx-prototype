@@ -1,8 +1,20 @@
+// Load environment variables
+require('dotenv').config();
+
 const express = require('express');
 const { ethers } = require('ethers');
 const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Initialize Circle Developer Controlled Wallets client
+const {
+  initiateDeveloperControlledWalletsClient,
+} = require('@circle-fin/developer-controlled-wallets')
+const client = initiateDeveloperControlledWalletsClient({
+  apiKey: process.env.CIRCLE_API_KEY,
+  entitySecret: process.env.CIRCLE_ENTITY_SECRET,
+})
 
 // Middleware
 app.use(express.json());
@@ -598,6 +610,166 @@ app.get('/ethereum/trades-by-hash', async (req, res) => {
     });
   }
 });
+
+app.post('/circle/wallet-sets', async (req, res) => {
+  try {
+    const { name, description, userIds, blockchain = 'ETH-SEPOLIA' } = req.body;
+    if (!name) {
+      return res.status(400).json({ error: 'Missing required parameter: name' });
+    }
+    const walletSetPayload = {
+      name: name,
+      ...(description && { description }),
+      ...(userIds && { userIds: userIds.split(',').map(id => id.trim()) })
+    };
+
+    const walletSetResponse = await client.createWalletSet(walletSetPayload);
+    const walletSet = walletSetResponse.data?.walletSet;
+    if (!walletSet || !walletSet.id) {
+      return res.status(500).json({ error: 'Failed to create wallet set', details: walletSetResponse });
+    }
+
+    const walletsResponse = await client.createWallets({
+      blockchains: [blockchain],
+      count: 2,
+      walletSetId: walletSet.id,
+    });
+    res.json({
+      success: true,
+      walletSet: walletSet,
+      wallets: walletsResponse.data?.wallets || [],
+      message: 'Wallet set and 2 wallets created successfully'
+    });
+  } catch (error) {
+    console.error('Circle Wallet Sets API error:', error);
+    res.status(500).json({
+      error: 'Failed to create wallet set and wallets',
+      message: error.message
+    });
+  }
+});
+
+app.get('/circle/wallets/:walletSetId', async (req, res) => {
+  try {
+    const { walletSetId } = req.params;
+    
+    if (!walletSetId) {
+      return res.status(400).json({ 
+        error: 'Missing required parameter: walletSetId' 
+      });
+    }
+
+    const walletsResponse = await client.getWalletsWithBalances({
+      walletSetId: walletSetId,
+      blockchain: 'ETH-SEPOLIA'
+    });
+
+    // Add debugging information
+    console.log('Wallets response:', JSON.stringify(walletsResponse.data, null, 2));
+
+    res.json({
+      success: true,
+      wallets: walletsResponse.data?.wallets || [],
+      message: 'Wallets with balances retrieved successfully'
+    });
+  } catch (error) {
+    console.error('Get wallets error:', error);
+    res.status(500).json({
+      error: 'Failed to retrieve wallets',
+      message: error.message
+    });
+  }
+});
+
+app.post('/circle/fund-wallet', async (req, res) => {
+  try {
+    const { address } = req.body;
+
+    if (!address) {
+      return res.status(400).json({ 
+        error: 'Missing required parameter: address' 
+      });
+    }
+
+    if (!ethers.isAddress(address)) {
+      return res.status(400).json({ 
+        error: 'Invalid Ethereum address format' 
+      });
+    }
+
+    const fundResponse = await client.requestTestnetTokens({
+      address: address,
+      blockchain: 'ETH-SEPOLIA',
+      usdc: true
+    });
+
+    res.json({
+      success: true,
+      data: fundResponse.data,
+      message: `Successfully funded ${address} with USDC testnet tokens`
+    });
+  } catch (error) {
+    console.error('Fund wallet error:', error);
+    
+    // Handle rate limiting specifically
+    if (error.message && error.message.includes('rate limit')) {
+      return res.status(429).json({
+        error: 'Rate limit exceeded',
+        message: 'You have been rate limited for funding. Please wait a few minutes before trying again.',
+        details: 'Circle testnet faucet has rate limits to prevent abuse. Try again in 5-10 minutes.',
+        retryAfter: 300 // 5 minutes
+      });
+    }
+    
+    res.status(500).json({
+      error: 'Failed to fund wallet',
+      message: error.message
+    });
+  }
+});
+
+// Get wallet by ID with balances
+app.get('/circle/wallet/:walletId', async (req, res) => {
+  try {
+    const { walletId } = req.params;
+    
+    if (!walletId) {
+      return res.status(400).json({ 
+        error: 'Missing required parameter: walletId' 
+      });
+    }
+
+    const walletResponse = await client.getWallet({
+      id: walletId
+    });
+
+    let balances = [];
+    try {
+      const balanceResponse = await client.getWalletTokenBalance({
+        id: walletId
+      });
+      balances = balanceResponse.data?.tokenBalances || [];
+    } catch (balanceError) {
+      console.log('Could not fetch balances for wallet:', walletId, balanceError.message);
+      // Continue without balances if they can't be fetched
+    }
+
+    res.json({
+      success: true,
+      wallet: walletResponse.data?.wallet,
+      balances: balances,
+      message: 'Wallet information and balances retrieved successfully'
+    });
+  } catch (error) {
+    console.error('Get wallet error:', error);
+    res.status(500).json({
+      error: 'Failed to retrieve wallet information',
+      message: error.message
+    });
+  }
+});
+
+
 
 // Start server
 app.listen(PORT, () => {

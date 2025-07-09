@@ -19,6 +19,7 @@
                 <div class="tab" onclick="showTab('execute')">Broadcast Trade</div>
                 <div class="tab" onclick="showTab('provide-funds')">Fund Trade</div>
                 <div class="tab" onclick="showTab('stored-trades')">Get Trades</div>
+                <div class="tab" onclick="showTab('circle-wallets')">Circle Wallets</div>
                 <div class="tab" onclick="showTab('fireblocks')">Fireblocks</div>
                 <div class="tab" onclick="showTab('debug')">Debug Events</div>
             </div>
@@ -89,7 +90,7 @@
                     <div class="alert alert-info">
                         <strong>Important:</strong> Use the "Sign Trade" button to create a proper EIP-712 signature with MetaMask for the TradeContract. 
                         Make sure MetaMask is connected and you're on the Hardhat local network.
-                        <strong>ETH Only:</strong> Only ETH trades are supported.
+                        <strong>USDC Only:</strong> Only USDC trades are supported.
                     </div>
 
                     <div class="form-group">
@@ -109,9 +110,9 @@
                         <label for="fromCurrency">From Currency:</label>
                         <select id="fromCurrency" required>
                             <option value="">Select Currency</option>
-                            <option value="ETH" selected>ETH (Native)</option>
+                            <option value="USDC" selected>USDC</option>
                         </select>
-                        <small class="form-text">Only ETH is supported for trades</small>
+                        <small class="form-text">Only USDC is supported for trades</small>
                     </div>
                     <div class="form-group">
                         <label for="toAmount">To Amount:</label>
@@ -121,9 +122,9 @@
                         <label for="toCurrency">To Currency:</label>
                         <select id="toCurrency" required>
                             <option value="">Select Currency</option>
-                            <option value="ETH" selected>ETH (Native)</option>
+                            <option value="USDC" selected>USDC</option>
                         </select>
-                        <small class="form-text">Only ETH is supported for trades</small>
+                        <small class="form-text">Only USDC is supported for trades</small>
                     </div>
                     <div class="form-group">
                         <label for="authorizationSignature">Authorization Signature:</label>
@@ -270,6 +271,127 @@
                     </div>
 
                     <div id="tradesResult" class="result hidden"></div>
+                </div>
+            </div>
+
+            <!-- Circle Wallets Tab -->
+            <div id="circle-wallets" class="tab-content">
+                <div class="section">
+                    <h2>🔄 Circle Wallet Sets</h2>
+                    <div class="alert alert-info">
+                        <strong>Circle Developer Controlled Wallets:</strong> Create and manage wallet sets using Circle's Developer Controlled Wallets API. 
+                        This allows you to create wallets programmatically and manage them through Circle's infrastructure.
+                    </div>
+
+                    <!-- Create Wallet Set -->
+                    <div class="section">
+                        <h3>🏗️ Create Wallet Set</h3>
+                        <div class="alert alert-warning">
+                            <strong>Important:</strong> This will create a new wallet set in Circle. Make sure you have the necessary API credentials configured.
+                        </div>
+
+                        <div class="form-group">
+                            <label for="walletSetName">Wallet Set Name:</label>
+                            <input type="text" id="walletSetName" placeholder="Enter wallet set name" value="My Wallet Set">
+                            <small class="form-text">A descriptive name for the new wallet set</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="walletSetDescription">Description (Optional):</label>
+                            <textarea id="walletSetDescription" rows="3" placeholder="Enter description for the wallet set"></textarea>
+                            <small class="form-text">Optional description for the wallet set</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="walletSetUserIds">User IDs (Optional):</label>
+                            <input type="text" id="walletSetUserIds" placeholder="user1,user2,user3">
+                            <small class="form-text">Comma-separated list of user IDs to associate with this wallet set</small>
+                        </div>
+
+                        <button class="btn btn-primary" onclick="createWalletSet()">Create Wallet Set</button>
+                        <div id="createWalletSetResult" class="result hidden"></div>
+                    </div>
+
+                    <!-- Wallet Set Information -->
+                    <div class="section">
+                        <h3>📋 Wallet Set Information</h3>
+                        <div class="wallet-set-info">
+                            <div class="info-grid">
+                                <div class="info-item">
+                                    <span class="info-label">Wallet Set ID:</span>
+                                    <span id="walletSetId" class="info-value">-</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Name:</span>
+                                    <span id="walletSetNameDisplay" class="info-value">-</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Description:</span>
+                                    <span id="walletSetDescriptionDisplay" class="info-value">-</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Status:</span>
+                                    <span id="walletSetStatus" class="info-value">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+
+                    <!-- Fund Wallet -->
+                    <div class="section">
+                        <h3>💰 Fund Wallet with USDC</h3>
+                        <div class="alert alert-info">
+                            <strong>Fund Wallet:</strong> Fund any wallet address with USDC testnet tokens for testing purposes. 
+                            This uses Circle's testnet token faucet.
+                        </div>
+                        <div class="alert alert-warning">
+                            <strong>⚠️ Rate Limiting Notice:</strong> Circle's testnet faucet has rate limits to prevent abuse. 
+                            If you get rate limited, please wait 5-10 minutes before trying again.
+                        </div>
+
+                        <div class="form-group">
+                            <label for="fundWalletAddress">Wallet Address:</label>
+                            <input type="text" id="fundWalletAddress" placeholder="Enter wallet address (0x...)" required>
+                            <small class="form-text">The Ethereum address to fund with USDC testnet tokens</small>
+                        </div>
+
+                        <button class="btn btn-success" onclick="fundWallet()">Fund Wallet</button>
+                        <div id="fundWalletResult" class="result hidden"></div>
+                    </div>
+
+                    <!-- Get Wallet by ID -->
+                    <div class="section">
+                        <h3>🔍 Get Wallet by ID</h3>
+                        <div class="alert alert-info">
+                            <strong>Get Wallet Details:</strong> Retrieve detailed information about a specific wallet using its ID. 
+                            You can find wallet IDs in the wallet list above.
+                        </div>
+
+                        <div class="form-group">
+                            <label for="walletIdInput">Wallet ID:</label>
+                            <input type="text" id="walletIdInput" placeholder="Enter wallet ID (e.g., c4d1da72-111e-4d52-bdbf-2e74a2d803d5)">
+                            <small class="form-text">The unique identifier of the wallet you want to retrieve</small>
+                        </div>
+
+                        <button class="btn btn-primary" onclick="getWalletById()">Get Wallet Info</button>
+                        <div id="getWalletResult" class="result hidden"></div>
+                    </div>
+
+                    <!-- Wallet List -->
+                    <div class="section">
+                        <h3>📋 Wallet List</h3>
+                        <div class="wallets-container">
+                            <div class="wallet-actions">
+                                <button class="btn btn-primary" onclick="listWallets()" id="listWalletsBtn">List Wallets</button>
+                                <button class="btn btn-secondary" onclick="clearWallets()">Clear List</button>
+                            </div>
+                            <div id="walletsList" class="wallets-list">
+                                <p class="no-wallets">No wallets loaded. Click "List Wallets" to view wallets in the current wallet set.</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -2295,6 +2417,492 @@
                 <p>Click "List Vault Accounts" to view available vault accounts</p>
             `;
             addToRecentActivity('Vault Accounts Cleared', 'Vault accounts list cleared', 'info');
+        }
+
+        // Circle Wallet Functions
+        async function createWalletSet() {
+            try {
+                const name = document.getElementById('walletSetName').value;
+                const description = document.getElementById('walletSetDescription').value;
+                const userIds = document.getElementById('walletSetUserIds').value;
+
+                if (!name) {
+                    showNotification('Please enter a wallet set name', 'error');
+                    return;
+                }
+
+                // Show loading state
+                document.getElementById('createWalletSetResult').innerHTML = `
+                    <h3>Creating Wallet Set...</h3>
+                    <p>Please wait while the wallet set is being created in Circle...</p>
+                `;
+                document.getElementById('createWalletSetResult').className = 'result loading';
+                showElement('createWalletSetResult');
+
+                const payload = {
+                    name: name,
+                    ...(description && { description }),
+                    ...(userIds && { userIds: userIds.split(',').map(id => id.trim()) })
+                };
+
+                const response = await fetch('/circle/wallet-sets', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(`Backend error: ${result.error || 'Unknown error'}`);
+                }
+
+                // Update wallet set information display
+                const walletSet = result.walletSet;
+                if (walletSet) {
+                    document.getElementById('walletSetId').textContent = walletSet.id || 'N/A';
+                    document.getElementById('walletSetNameDisplay').textContent = walletSet.name || 'N/A';
+                    document.getElementById('walletSetDescriptionDisplay').textContent = walletSet.description || 'N/A';
+                    document.getElementById('walletSetStatus').textContent = walletSet.state || 'N/A';
+                }
+
+                document.getElementById('createWalletSetResult').innerHTML = `
+                    <h3>✅ Wallet Set and Wallets Created Successfully</h3>
+                    <div class="wallet-set-details">
+                        <p><strong>Wallet Set ID:</strong> ${walletSet?.id || 'N/A'}</p>
+                        <p><strong>Name:</strong> ${walletSet?.name || 'N/A'}</p>
+                        <p><strong>Description:</strong> ${walletSet?.description || 'N/A'}</p>
+                        <p><strong>Status:</strong> ${walletSet?.state || 'N/A'}</p>
+                        <p><strong>Message:</strong> ${result.message}</p>
+                    </div>
+                    <p><strong>Next Steps:</strong> ${result.wallets?.length || 0} wallet(s) have been created in this wallet set.</p>
+                `;
+                document.getElementById('createWalletSetResult').className = 'result success';
+                showElement('createWalletSetResult');
+
+                addToRecentActivity('Wallet Set Created', `Created wallet set: ${name} (ID: ${walletSet?.id}) with ${result.wallets?.length || 0} wallet(s)`, 'success');
+                showNotification('Wallet set created successfully!', 'success');
+
+            } catch (error) {
+                console.error('Create wallet set error:', error);
+                document.getElementById('createWalletSetResult').innerHTML = `
+                    <h3>❌ Wallet Set Creation Failed</h3>
+                    <p><strong>Error:</strong> ${error.message}</p>
+                    <p><strong>Troubleshooting:</strong></p>
+                    <ul>
+                        <li>Check if Circle API credentials are configured</li>
+                        <li>Verify the API key and entity secret are valid</li>
+                        <li>Ensure Circle API is accessible</li>
+                        <li>Check if the wallet set name is valid</li>
+                    </ul>
+                `;
+                document.getElementById('createWalletSetResult').className = 'result error';
+                showElement('createWalletSetResult');
+                addToRecentActivity('Wallet Set Creation Failed', error.message, 'error');
+            }
+        }
+
+
+
+        async function listWallets() {
+            try {
+                const walletSetId = document.getElementById('walletSetId').textContent;
+                
+                if (walletSetId === '-') {
+                    showNotification('Please create a wallet set first', 'error');
+                    return;
+                }
+
+                // Show loading state
+                document.getElementById('walletsList').innerHTML = `
+                    <div class="alert alert-info">
+                        <strong>Loading Wallets...</strong>
+                        <p>Please wait while fetching wallets from Circle...</p>
+                    </div>
+                `;
+
+                const response = await fetch(`/circle/wallets/${walletSetId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(`Backend error: ${result.error || 'Unknown error'}`);
+                }
+
+                const wallets = result.wallets || [];
+                updateWalletList(wallets);
+
+                addToRecentActivity('Wallets Listed', `${wallets.length} wallet(s) retrieved from wallet set ${walletSetId}`, 'success');
+                showNotification(`${wallets.length} wallet(s) loaded successfully!`, 'success');
+
+            } catch (error) {
+                console.error('List wallets error:', error);
+                document.getElementById('walletsList').innerHTML = `
+                    <div class="alert alert-error">
+                        <strong>❌ Failed to Load Wallets</strong>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                        <p><strong>Troubleshooting:</strong></p>
+                        <ul>
+                            <li>Check if Circle API credentials are configured</li>
+                            <li>Verify the wallet set ID is valid</li>
+                            <li>Ensure Circle API is accessible</li>
+                            <li>Check if the wallet set contains any wallets</li>
+                        </ul>
+                    </div>
+                `;
+                addToRecentActivity('List Wallets Failed', error.message, 'error');
+            }
+        }
+
+        function clearWallets() {
+            document.getElementById('walletsList').innerHTML = `
+                <p class="no-wallets">No wallets loaded. Click "List Wallets" to view wallets in the current wallet set.</p>
+            `;
+            addToRecentActivity('Wallets Cleared', 'Wallet list cleared', 'info');
+        }
+
+        async function fundWallet() {
+            try {
+                const address = document.getElementById('fundWalletAddress').value.trim();
+
+                if (!address) {
+                    showNotification('Please enter a wallet address', 'error');
+                    return;
+                }
+
+                // Validate Ethereum address format
+                if (!address.startsWith('0x') || address.length !== 42) {
+                    showNotification('Please enter a valid Ethereum address (0x... format)', 'error');
+                    return;
+                }
+
+                // Show loading state
+                document.getElementById('fundWalletResult').innerHTML = `
+                    <h3>Funding Wallet...</h3>
+                    <p>Please wait while funding ${address} with USDC testnet tokens...</p>
+                `;
+                document.getElementById('fundWalletResult').className = 'result loading';
+                showElement('fundWalletResult');
+
+                const response = await fetch('/circle/fund-wallet', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        address: address
+                    })
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(`Backend error: ${result.error || 'Unknown error'}`);
+                }
+
+                document.getElementById('fundWalletResult').innerHTML = `
+                    <h3>✅ Wallet Funded Successfully</h3>
+                    <div class="fund-details">
+                        <p><strong>Address:</strong> <code>${address}</code></p>
+                        <p><strong>Message:</strong> ${result.message}</p>
+                        ${result.data?.id ? `<p><strong>Transaction ID:</strong> ${result.data.id}</p>` : ''}
+                    </div>
+                    <p><strong>Note:</strong> Testnet tokens may take a few minutes to appear in the wallet.</p>
+                `;
+                document.getElementById('fundWalletResult').className = 'result success';
+                showElement('fundWalletResult');
+
+                addToRecentActivity('Wallet Funded', `Funded ${address} with USDC testnet tokens`, 'success');
+                showNotification(`Successfully funded ${address} with USDC!`, 'success');
+
+            } catch (error) {
+                console.error('Fund wallet error:', error);
+                
+                let errorMessage = error.message;
+                let troubleshooting = `
+                    <ul>
+                        <li>Check if Circle API credentials are configured</li>
+                        <li>Verify the wallet address is valid</li>
+                        <li>Check if Circle testnet service is available</li>
+                    </ul>
+                `;
+                
+                // Handle rate limiting specifically
+                if (error.message && error.message.includes('rate limit')) {
+                    errorMessage = 'Rate limit exceeded - please wait 5-10 minutes before trying again';
+                    troubleshooting = `
+                        <ul>
+                            <li><strong>Rate Limited:</strong> Circle's testnet faucet has rate limits</li>
+                            <li>Wait 5-10 minutes before trying again</li>
+                            <li>Try funding a different wallet address</li>
+                            <li>Check if you've funded this address recently</li>
+                        </ul>
+                    `;
+                }
+                
+                document.getElementById('fundWalletResult').innerHTML = `
+                    <h3>❌ Wallet Funding Failed</h3>
+                    <p><strong>Error:</strong> ${errorMessage}</p>
+                    <p><strong>Troubleshooting:</strong></p>
+                    ${troubleshooting}
+                `;
+                document.getElementById('fundWalletResult').className = 'result error';
+                showElement('fundWalletResult');
+                addToRecentActivity('Wallet Funding Failed', errorMessage, 'error');
+            }
+        }
+
+        function updateWalletList(wallets) {
+            const walletsList = document.getElementById('walletsList');
+            
+            if (!wallets || wallets.length === 0) {
+                walletsList.innerHTML = `
+                    <p class="no-wallets">No wallets found in this wallet set.</p>
+                `;
+                return;
+            }
+
+            walletsList.innerHTML = `
+                <h4>📋 Wallets in Wallet Set (${wallets.length})</h4>
+                <div class="wallets-grid">
+                    ${wallets.map(wallet => {
+                        // Extract balance information from tokenBalances
+                        const tokenBalances = wallet.tokenBalances || [];
+                        const ethBalance = tokenBalances.find(b => b.token?.isNative === true) || { amount: '0' };
+                        const usdcBalance = tokenBalances.find(b => b.token?.symbol === 'USDC') || { amount: '0' };
+                        
+                        return `
+                        <div class="wallet-card">
+                            <div class="wallet-header">
+                                <h5>Wallet ${wallet.id || 'Unknown'}</h5>
+                                <span class="wallet-status">${wallet.state || 'Unknown'}</span>
+                            </div>
+                            <div class="wallet-details">
+                                <p><strong>Address:</strong> <code>${wallet.address || 'N/A'}</code></p>
+                                <p><strong>Blockchain:</strong> ${wallet.blockchain || 'N/A'}</p>
+                                <p><strong>Wallet Set ID:</strong> ${wallet.walletSetId || 'N/A'}</p>
+                                ${wallet.description ? `<p><strong>Description:</strong> ${wallet.description}</p>` : ''}
+                            </div>
+                            <div class="wallet-balances">
+                                <h6>💰 Balances</h6>
+                                ${tokenBalances.length > 0 ? tokenBalances.map(balance => {
+                                    const token = balance.token;
+                                    const symbol = token?.symbol || (token?.isNative ? getNativeSymbol(wallet.blockchain) : 'Unknown');
+                                    const decimals = token?.decimals || 6;
+                                    return `
+                                    <div class="balance-item">
+                                        <span class="balance-label">${symbol}:</span>
+                                        <span class="balance-value">${parseFloat(balance.amount).toFixed(decimals)} ${symbol}</span>
+                                    </div>
+                                    `;
+                                }).join('') : `
+                                <div class="balance-item">
+                                    <span class="balance-label">No balances found</span>
+                                    <span class="balance-value">-</span>
+                                </div>
+                                `}
+                            </div>
+                            <div class="wallet-actions">
+                                <button class="btn btn-sm btn-success" onclick="fundSpecificWallet('${wallet.address}')">Fund This Wallet</button>
+                            </div>
+                        </div>
+                    `}).join('')}
+                </div>
+            `;
+        }
+
+        function getNativeSymbol(blockchain) {
+            const symbolMap = {
+                'ETH-SEPOLIA': 'ETH',
+                'ETH-MAINNET': 'ETH',
+                'MATIC-AMOY': 'MATIC',
+                'MATIC-MAINNET': 'MATIC',
+                'AVAX-FUJI': 'AVAX',
+                'AVAX-MAINNET': 'AVAX',
+                'BSC-TESTNET': 'BNB',
+                'BSC-MAINNET': 'BNB'
+            };
+            return symbolMap[blockchain] || 'ETH';
+        }
+
+
+
+        async function getWalletById() {
+            try {
+                const walletId = document.getElementById('walletIdInput').value.trim();
+
+                if (!walletId) {
+                    showNotification('Please enter a wallet ID', 'error');
+                    return;
+                }
+
+                // Show loading state
+                document.getElementById('getWalletResult').innerHTML = `
+                    <h3>Loading Wallet Information...</h3>
+                    <p>Please wait while retrieving wallet details...</p>
+                `;
+                document.getElementById('getWalletResult').className = 'result loading';
+                showElement('getWalletResult');
+
+                const response = await fetch(`/circle/wallet/${walletId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(`Backend error: ${result.error || 'Unknown error'}`);
+                }
+
+                const wallet = result.wallet;
+                if (!wallet) {
+                    throw new Error('No wallet data received');
+                }
+
+                document.getElementById('getWalletResult').innerHTML = `
+                    <h3>✅ Wallet Information Retrieved</h3>
+                    <div class="wallet-details">
+                        <div class="detail-grid">
+                            <div class="detail-item">
+                                <span class="detail-label">Wallet ID:</span>
+                                <span class="detail-value">${wallet.id || 'N/A'}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Address:</span>
+                                <span class="detail-value"><code>${wallet.address || 'N/A'}</code></span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Blockchain:</span>
+                                <span class="detail-value">${wallet.blockchain || 'N/A'}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">State:</span>
+                                <span class="detail-value">${wallet.state || 'N/A'}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Account Type:</span>
+                                <span class="detail-value">${wallet.accountType || 'N/A'}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Custody Type:</span>
+                                <span class="detail-value">${wallet.custodyType || 'N/A'}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Wallet Set ID:</span>
+                                <span class="detail-value">${wallet.walletSetId || 'N/A'}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">User ID:</span>
+                                <span class="detail-value">${wallet.userId || 'N/A'}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Reference ID:</span>
+                                <span class="detail-value">${wallet.refId || 'N/A'}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Name:</span>
+                                <span class="detail-value">${wallet.name || 'N/A'}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Created:</span>
+                                <span class="detail-value">${wallet.createDate ? new Date(wallet.createDate).toLocaleString() : 'N/A'}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Updated:</span>
+                                <span class="detail-value">${wallet.updateDate ? new Date(wallet.updateDate).toLocaleString() : 'N/A'}</span>
+                            </div>
+                            ${wallet.initialPublicKey ? `
+                            <div class="detail-item">
+                                <span class="detail-label">Initial Public Key:</span>
+                                <span class="detail-value"><code>${wallet.initialPublicKey}</code></span>
+                            </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                    
+                    ${result.balances && result.balances.length > 0 ? `
+                    <div class="wallet-balances-section">
+                        <h4>💰 Token Balances</h4>
+                        <div class="balances-grid">
+                            ${result.balances.map(balance => {
+                                const token = balance.token;
+                                const symbol = token?.symbol || (token?.isNative ? getNativeSymbol(wallet.blockchain) : 'Unknown');
+                                const decimals = token?.decimals || 6;
+                                return `
+                                <div class="balance-card">
+                                    <div class="balance-header">
+                                        <span class="balance-symbol">${symbol}</span>
+                                        ${token?.isNative ? '<span class="native-badge">Native</span>' : ''}
+                                    </div>
+                                    <div class="balance-amount">
+                                        ${parseFloat(balance.amount).toFixed(decimals)} ${symbol}
+                                    </div>
+                                    ${token && !token.isNative ? `
+                                    <div class="token-details">
+                                        <small>Contract: <code>${token.tokenAddress || 'N/A'}</code></small>
+                                        <small>Standard: ${token.standard || 'N/A'}</small>
+                                    </div>
+                                    ` : ''}
+                                </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                    ` : `
+                    <div class="wallet-balances-section">
+                        <h4>💰 Token Balances</h4>
+                        <p class="no-balances">No token balances found for this wallet.</p>
+                    </div>
+                    `}
+                    
+                    <p><strong>Message:</strong> ${result.message}</p>
+                `;
+                document.getElementById('getWalletResult').className = 'result success';
+                showElement('getWalletResult');
+
+                addToRecentActivity('Wallet Retrieved', `Retrieved wallet information for ID: ${walletId}`, 'success');
+                showNotification(`Successfully retrieved wallet information for ${walletId}!`, 'success');
+
+            } catch (error) {
+                console.error('Get wallet by ID error:', error);
+                document.getElementById('getWalletResult').innerHTML = `
+                    <h3>❌ Failed to Retrieve Wallet</h3>
+                    <p><strong>Error:</strong> ${error.message}</p>
+                    <p><strong>Troubleshooting:</strong></p>
+                    <ul>
+                        <li>Check if the wallet ID is correct</li>
+                        <li>Verify the wallet ID format</li>
+                        <li>Ensure the wallet exists in your account</li>
+                        <li>Check if Circle API credentials are configured</li>
+                    </ul>
+                `;
+                document.getElementById('getWalletResult').className = 'result error';
+                showElement('getWalletResult');
+                addToRecentActivity('Get Wallet Failed', error.message, 'error');
+            }
+        }
+
+        function fundSpecificWallet(address) {
+            // Auto-fill the fund wallet form with the selected address
+            document.getElementById('fundWalletAddress').value = address;
+            
+            // Scroll to the fund wallet section
+            const fundSection = document.querySelector('#circle-wallets .section:nth-child(3)');
+            if (fundSection) {
+                fundSection.scrollIntoView({ behavior: 'smooth' });
+            }
+            
+            showNotification(`Address ${address} has been filled in the fund form`, 'info');
         }
     </script>
 </body>

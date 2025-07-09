@@ -19,6 +19,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@circle-fin/developer-controlled-wallets": "^8.3.0",
+    "dotenv": "^16.6.1",
     "ethers": "^6.14.4",
     "express": "^4.18.2"
   },
